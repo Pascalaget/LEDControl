@@ -8,7 +8,9 @@ Android App written in Java
 Arduino in C
 
 **Bluetooth Connection**
+
 ![alt text](https://github.com/Pascalaget/LEDControl/blob/master/LEDControll/RM_Images/App_Bluetooth.jpg)
 
 **App Controls**
+
 ![alt text](https://github.com/Pascalaget/LEDControl/blob/master/LEDControll/RM_Images/App_colorwheel.jpg)
