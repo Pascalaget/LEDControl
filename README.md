@@ -1,6 +1,7 @@
 # LEDControl
-LED control Android app
-Small project from 2017 to controll a LED with an Arduino.
+LED control Android app.
+
+From 2017 to controll a LED with an Arduino.
 The App connected via Bluetooth to the Arduino.
 A selection of different LED effects, like Rainbow, blinking, static, etc.
 
