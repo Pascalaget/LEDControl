@@ -1,0 +1,42 @@
+#include "FastLED.h"                                          
+
+#define NUM_LEDS 32 
+#define DATA_PIN 7
+#define CLOCK_PIN 13
+#define COLOR_ORDER BGR
+#define LED_TYPE  WS2801                                          
+
+CRGB leds[NUM_LEDS];
+// Initialize changeable global variables.
+
+int brightness = 32;
+                                 
+
+uint8_t thisdelay2 = 5;                                       
+uint8_t thishue2 = 0;                                          
+uint8_t deltahue2 = 10;                        
+
+void setup() {
+  Serial.begin(57600);
+
+//  LEDS.addLeds<LED_TYPE, LED_DT, COLOR_ORDER>(leds, NUM_LEDS);         // For WS2812B
+  LEDS.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, NUM_LEDS);   // For APA102 or WS2801
+
+  FastLED.setBrightness(brightness);
+  set_max_power_in_volts_and_milliamps(5, 500);               // FastLED 2.1 Power management set at 5V, 500mA
+} // setup()
+
+
+void loop () {
+  EVERY_N_MILLISECONDS(thisdelay2) {                           // FastLED based non-blocking routine to update/display the sequence.
+    rainbow_march();
+  }
+  show_at_max_brightness_for_power();  
+} // loop()
+
+
+void rainbow_march() {   
+   // The fill_rainbow call doesn't support brightness levels
+  thishue2++;                                                  // Increment the starting hue.
+  fill_rainbow(leds, NUM_LEDS, thishue2, deltahue2);            // Use FastLED's fill_rainbow routine.
+} // rainbow_march()

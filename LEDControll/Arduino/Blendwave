@@ -1,0 +1,64 @@
+#include "FastLED.h"
+
+// How many leds in your strip?
+#define NUM_LEDS 32 
+
+// For led chips like Neopixels, which have a data line, ground, and power, you just
+// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
+// ground, and power), like the LPD8806, define both DATA_PIN and CLOCK_PIN
+#define DATA_PIN 7
+#define CLOCK_PIN 13
+#define COLOR_ORDER BGR
+#define LED_TYPE  WS2801
+
+uint8_t max_bright = 128;                                      
+uint8_t thisdelay = 20;
+
+struct CRGB leds[NUM_LEDS];
+
+CRGB clr1;
+CRGB clr2;
+uint8_t speed;
+uint8_t loc1;
+uint8_t loc2;
+uint8_t ran1;
+uint8_t ran2;
+
+
+void setup() {
+
+  Serial.begin(57600);                                        // Initialize serial port for debugging.
+  delay(1000);                                                // Soft startup to ease the flow of electrons.
+ 
+  LEDS.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, NUM_LEDS);  // Use this for WS2801 or APA102
+
+
+  FastLED.setBrightness(max_bright);
+  set_max_power_in_volts_and_milliamps(5, 500);               // FastLED Power management set at 5V, 500mA.
+  
+} // setup()
+
+
+
+void loop(){ 
+  
+  blendwave();
+  FastLED.show();
+  
+} // loop()
+
+
+
+void blendwave() {
+
+  speed = beatsin8(6,0,255);
+
+  clr1 = blend(CHSV(beatsin8(3,0,255),255,255), CHSV(beatsin8(4,0,255),255,255), speed);
+  clr2 = blend(CHSV(beatsin8(4,0,255),255,255), CHSV(beatsin8(3,0,255),255,255), speed);
+
+  loc1 = beatsin8(10,0,NUM_LEDS-1);
+  
+  fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
+  fill_gradient_RGB(leds, loc1, clr2, NUM_LEDS-1, clr1);
+
+} // blendwave()

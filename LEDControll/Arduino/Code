@@ -1,0 +1,561 @@
+#include "FastLED.h"
+
+// How many leds in your strip?
+#define NUM_LEDS 32 
+
+// For led chips like Neopixels, which have a data line, ground, and power, you just
+// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
+// ground, and power), like the LPD8806, define both DATA_PIN and CLOCK_PIN
+#define DATA_PIN 7
+#define CLOCK_PIN 13
+
+char blueToothVal;           //value sent over via bluetooth
+char lastValue;              //stores last state of device (on/off)
+
+
+
+// Define the array of leds
+CRGB leds[NUM_LEDS];
+
+//variables
+int re = 255;
+int bl = 255;
+int gr = 255;
+int brightness = 16;
+
+void fadeall() { for(int i = 0; i < NUM_LEDS; i++) { leds[i].nscale8(250); } }
+
+void setup() { 
+  // Initialize serial communication, wait until ready
+  Serial.begin(9600);
+  while(!Serial);
+  Serial.println("ready");
+  LEDS.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
+
+}
+
+
+void loop() { 
+
+if(Serial.available())
+  {//if there is data being recieved
+    
+    blueToothVal=Serial.read(); //read it
+  }
+  if (blueToothVal=='n')
+  {//if value from bluetooth serial is n
+       re = 255;
+       bl = 255;
+       gr = 255;                //switch on LED
+    if (lastValue!='n')
+      Serial.println(F("LED is on")); //print LED is on
+    lastValue=blueToothVal;
+  }
+  else if (blueToothVal=='f')
+  {//if value from bluetooth serial is n
+      re = 0;
+       bl = 0;
+       gr = 0;             //turn off LED
+    if (lastValue!='f')
+      Serial.println(F("LED is off")); 
+    lastValue=blueToothVal;
+  }
+  else if (blueToothVal=='r')
+  {//if value from bluetooth serial is n
+       re = 0;
+       bl = 255;
+       gr = 0;             
+    if (lastValue!='r')
+      Serial.println(F("LED is red"));
+    lastValue=blueToothVal;
+  }
+    else if (blueToothVal=='b')
+  {
+       re = 255;
+       bl = 0;
+       gr = 0;         
+    if (lastValue!='b')
+      Serial.println(F("LED is blue"));
+    lastValue=blueToothVal;
+  }
+      else if (blueToothVal=='+')
+  {
+     brightness=255;       
+    if (lastValue!='+')
+      Serial.println(F("LED is brighter"));
+    lastValue=blueToothVal;
+  }
+      else if (blueToothVal=='c')
+  {
+      
+
+  }
+
+  
+  delay(1000);
+
+  
+  for(int i = (NUM_LEDS)-1; i >= 0; i--) {
+         leds[i].r = re;
+         leds[i].g = gr;
+         leds[i].b = bl; 
+     
+
+       LEDS.setBrightness(brightness);
+        FastLED.show(); 
+        delay(30); 
+        
+  }
+  
+    }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+#include "FastLED.h"
+
+#define NUM_LEDS 32 
+#define DATA_PIN 7
+#define CLOCK_PIN 13
+#define COLOR_ORDER BGR
+#define LED_TYPE  WS2801
+CRGB leds[NUM_LEDS];
+
+String message = ""; //string that stores the incoming message
+int brightness = 32;
+String io, mode, c1, c2, c3;
+uint8_t reset; 
+
+
+
+uint8_t i;  // counter
+uint8_t j;  // counter
+
+void setup()
+{
+  Serial.begin(9600); //set baud rate.
+  delay(1000);
+  LEDS.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  fill_solid( leds, NUM_LEDS, CRGB(255,0,0));
+  LEDS.setBrightness(brightness);
+  FastLED.show();
+  
+}
+
+void goLed(){
+    LEDS.setBrightness(brightness);
+    FastLED.show(); 
+    delay(100);
+  }
+  
+void selectColor(){
+  int commaIndex = mode.indexOf(',');
+      int secondCommaIndex = mode.indexOf(',', commaIndex + 1);
+      int bracketIndex = mode.indexOf(')');
+            
+      c1 = mode.substring(4,commaIndex);
+      c2 = mode.substring(commaIndex+1,secondCommaIndex);
+      c3 = mode.substring(secondCommaIndex+1,bracketIndex);
+      
+      fill_solid( leds, NUM_LEDS, CRGB(c1.toInt(),c2.toInt(),c3.toInt()));
+      goLed();
+}
+  
+
+
+
+
+void loop()
+{
+  if (Serial.available()){
+    message = Serial.readStringUntil('-');
+    delay(10);
+  }
+    else if (!Serial.available() && message != ""){
+      if(message == "on" || message == "off" || message.startsWith("Br")){
+        io = message;
+      }else if ( message.startsWith("RGB") || message == "Mood"){
+        mode = message;
+        reset = 1;
+      }
+      message="";
+      }
+    if(io=="off")
+    {
+      io = "";
+      fill_solid( leds, NUM_LEDS, CRGB(0,0,0));
+      goLed();
+      
+    }else if(io=="on")
+    {
+      io = "";
+      fill_solid( leds, NUM_LEDS, CRGB(255,255,255));
+      brightness=128;
+      goLed();
+    }
+    if(mode.startsWith("RGB"))
+    {if (reset){
+      reset = 0;
+      selectColor();
+      delay(10);
+    }
+    }
+    if(io.startsWith("Br"))
+    { 
+     //Br(255)
+      int bracketIndex = io.indexOf(')');
+      brightness = io.substring(3,bracketIndex).toInt();
+      io = "";
+      goLed();
+      delay(10);
+    }
+    if(mode = "Mood"){
+      if(reset){
+        reset = 0;
+        static uint8_t hue = 170; // start at blue
+        FastLED.showColor(CHSV(hue++, 255, 191)); // loop trough all the hue colors
+        delay(300);
+      }
+    }
+  
+  
+  
+    }
+  
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  #include "FastLED.h"
+
+#define NUM_LEDS 32 
+#define DATA_PIN 7
+#define CLOCK_PIN 13
+#define COLOR_ORDER BGR
+#define LED_TYPE  WS2801
+
+CRGB leds[NUM_LEDS];
+
+String message = ""; //string that stores the incoming message
+int brightness = 32;
+String io, mode, c1, c2, c3, w;
+uint8_t reset; 
+uint8_t thisdelay = 20;
+
+uint8_t thisdelay2 = 5;                                       
+uint8_t thishue2 = 0;                                          
+uint8_t deltahue2 = 10;  
+
+//Rainbow
+CRGBPalette16 currentPalette(CRGB::Black);
+CRGBPalette16 targetPalette(PartyColors_p );
+TBlendType currentBlending; // NOBLEND or LINEARBLEND
+
+CRGB clr1;
+CRGB clr2;
+uint8_t speed;
+uint8_t loc1;
+uint8_t loc2;
+uint8_t ran1;
+uint8_t ran2;
+
+void setup()
+{
+  Serial.begin(9600); //set baud rate.
+  while(!Serial);
+  delay(1000);
+  currentBlending = LINEARBLEND;
+  LEDS.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  set_max_power_in_volts_and_milliamps(5, 500);
+  fill_solid( leds, NUM_LEDS, CRGB(255,0,0));
+  LEDS.setBrightness(brightness);
+  FastLED.show();
+  
+}
+
+void goLed(){
+    LEDS.setBrightness(brightness);
+    FastLED.show(); 
+    delay(100);
+  }
+  
+void selectColor(){
+  int commaIndex = mode.indexOf(',');
+      int secondCommaIndex = mode.indexOf(',', commaIndex + 1);
+      int bracketIndex = mode.indexOf(')');
+            
+      c1 = mode.substring(4,commaIndex);
+      c2 = mode.substring(commaIndex+1,secondCommaIndex);
+      c3 = mode.substring(secondCommaIndex+1,bracketIndex);
+      
+      fill_solid( leds, NUM_LEDS, CRGB(c1.toInt(),c2.toInt(),c3.toInt()));
+      goLed();
+}
+
+
+void rainbow(){
+  ChangePalettePeriodically();
+   
+  EVERY_N_MILLISECONDS(100) {
+    uint8_t maxChanges = 24; 
+    nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges);
+  }
+
+ EVERY_N_MILLISECONDS(thisdelay) {
+  static uint8_t startIndex = 0;
+  startIndex += 1;                                 // motion speed
+  FillLEDsFromPaletteColors(startIndex);
+ }
+
+  FastLED.show();
+}
+
+void FillLEDsFromPaletteColors(uint8_t colorIndex) {
+  
+  for(int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = ColorFromPalette(currentPalette, colorIndex + sin8(i*16), 255);
+    colorIndex += 3;
+  }
+
+} // FillLEDsFromPaletteColors()
+
+
+ 
+void ChangePalettePeriodically() {
+  
+  uint8_t secondHand = (millis() / 1000) % 60;
+  static uint8_t lastSecond = 99;
+  
+  if(lastSecond != secondHand) {
+    lastSecond = secondHand;
+    CRGB p = CHSV(HUE_PURPLE, 255, 255);
+    CRGB g = CHSV(HUE_GREEN, 255, 255);
+    CRGB b = CRGB::Black;
+    CRGB w = CRGB::White;
+    if(secondHand ==  0)  { targetPalette = RainbowColors_p; }
+    if(secondHand == 10)  { targetPalette = CRGBPalette16(g,g,b,b, p,p,b,b, g,g,b,b, p,p,b,b); }
+    if(secondHand == 20)  { targetPalette = CRGBPalette16(b,b,b,w, b,b,b,w, b,b,b,w, b,b,b,w); }
+    if(secondHand == 30)  { targetPalette = LavaColors_p; }
+    if(secondHand == 40)  { targetPalette = CloudColors_p; }
+    if(secondHand == 50)  { targetPalette = PartyColors_p; }
+  }
+}
+
+
+void blendwave() {
+
+  speed = beatsin8(6,0,255);
+
+  clr1 = blend(CHSV(beatsin8(3,0,255),255,255), CHSV(beatsin8(4,0,255),255,255), speed);
+  clr2 = blend(CHSV(beatsin8(4,0,255),255,255), CHSV(beatsin8(3,0,255),255,255), speed);
+
+  loc1 = beatsin8(10,0,NUM_LEDS-1);
+  
+  fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
+  fill_gradient_RGB(leds, loc1, clr2, NUM_LEDS-1, clr1);
+  FastLED.show();
+
+}
+
+void rainbow_march() {   
+   // The fill_rainbow call doesn't support brightness levels
+  thishue2++;                                                  // Increment the starting hue.
+  fill_rainbow(leds, NUM_LEDS, thishue2, deltahue2);            // Use FastLED's fill_rainbow routine.
+} // rainbow_march()
+
+void call(){
+  // Turn the LED on, then pause
+  fill_solid( leds, NUM_LEDS, CRGB::Red);
+  FastLED.show();
+  delay(500);
+  // Now turn the LED off, then pause
+  fill_solid( leds, NUM_LEDS, CRGB(0,0,0));
+  FastLED.show();
+  delay(500);
+}
+
+
+void fadeall() { for(int i = 0; i < NUM_LEDS; i++) { leds[i].nscale8(250); } }
+
+
+void loop()
+{
+  if (Serial.available()){
+    message = Serial.readStringUntil('-');
+    delay(10);
+  }
+    else if (!Serial.available() && message != ""){
+      if(message == "on" || message == "off" || message.startsWith("Br")){
+        io = message;
+      }else if ( message.startsWith("RGB") || message == "Mood" || message == "Cylon" || message == "Rainbow" || message == "Blendwave" || message == "Rainbow2" || message == "Call"){
+        mode = message;
+        reset = 1;
+      }
+      message="";
+      }
+    if(io=="off")
+    {
+      io = "";
+      fill_solid( leds, NUM_LEDS, CRGB(0,0,0));
+      goLed();
+      
+    }else if(io=="on")
+    {
+      io = "";
+      fill_solid( leds, NUM_LEDS, CRGB(255,255,255));
+      brightness=128;
+      goLed();
+    }
+    if(mode.startsWith("RGB"))
+    {if (reset){
+      reset = 0;
+      selectColor();
+      delay(10);
+    }
+    }
+    if(io.startsWith("Br"))
+    { 
+     //Br(255)
+      int bracketIndex = io.indexOf(')');
+      brightness = io.substring(3,bracketIndex).toInt();
+      io = "";
+      goLed();
+      delay(10);
+    }
+    if(mode == "Mood"){
+      if(reset){
+        reset = 0;
+        static uint8_t hue = 170; // start at blue
+        for(int i = 0; i < 999999; i++) {
+          if(Serial.available()){
+            message = Serial.readStringUntil('-');
+          }if (message != "" && message != "Mood"){
+           i=0;
+           break;
+          }
+        FastLED.showColor(CHSV(hue++, 255, 191)); // loop trough all the hue colors
+        delay(300);
+      }
+      }
+    }if(mode == "Cylon"){
+      if(reset){
+        reset = 0;
+        static uint8_t hue = 0;
+
+      for(int i = 0; i < 999999; i++) {
+          if(Serial.available()){
+            message = Serial.readStringUntil('-');
+          }if (message != "" && message != "Cylon"){
+           break; i=0;
+          }
+      for(int i = 0; i < NUM_LEDS; i++) {
+      leds[i] = CHSV(hue++, 255, 255);
+      FastLED.show(); 
+      fadeall();
+      delay(10);
+        } 
+    for(int i = (NUM_LEDS)-1; i >= 0; i--) {
+    leds[i] = CHSV(hue++, 255, 255);
+    FastLED.show();
+    fadeall();
+    delay(10);
+  }
+  }
+  }
+  }if(mode == "Rainbow"){
+      if(reset){
+        reset = 0;
+        for(int i = 0; i < 999999; i++) {
+          if(Serial.available()){
+            message = Serial.readStringUntil('-');
+          }if (message != "" && message != "Rainbow"){
+           break; i=0;
+          }rainbow();
+        }
+      }
+  }if(mode == "Blendwave"){
+      if(reset){
+        reset = 0;
+        for(int i = 0; i < 999999; i++) {
+          if(Serial.available()){
+            message = Serial.readStringUntil('-');
+          }if (message != "" && message != "Blendwave"){
+           break; i=0;
+          }blendwave();
+        }
+      }
+  }if(mode == "Rainbow2"){
+      if(reset){
+        reset = 0;
+        for(int i = 0; i < 999999; i++) {
+          if(Serial.available()){
+            message = Serial.readStringUntil('-');
+          }if (message != "" && message != "Rainbow2"){
+           break; i=0;
+          }EVERY_N_MILLISECONDS(thisdelay2) {                           // FastLED based non-blocking routine to update/display the sequence.
+    rainbow_march();
+  }
+  FastLED.show();   
+        }
+      }
+  }if(mode == "Call"){
+      if(reset){
+        reset = 0;
+        for(int i = 0; i < 20; i++) {
+          if(Serial.available()){
+            message = Serial.readStringUntil('-');
+          }if (message != "" && message == "Idle"){
+           fill_solid( leds, NUM_LEDS, CRGB(255,0,0));
+           goLed();
+           break; i=0; 
+          }call();
+        }
+      }
+  }
+}
+  
+  

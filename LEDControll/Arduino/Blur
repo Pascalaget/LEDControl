@@ -1,0 +1,53 @@
+#include "FastLED.h"
+
+// How many leds in your strip?
+#define NUM_LEDS 32 
+
+// For led chips like Neopixels, which have a data line, ground, and power, you just
+// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
+// ground, and power), like the LPD8806, define both DATA_PIN and CLOCK_PIN
+#define DATA_PIN 7
+#define CLOCK_PIN 13
+#define COLOR_ORDER BGR
+#define LED_TYPE  WS2801
+
+uint8_t max_bright = 128;                                      
+
+
+struct CRGB leds[NUM_LEDS];
+
+
+void setup() {
+
+  Serial.begin(57600);                                        // Initialize serial port for debugging.
+  delay(1000);                                                // Soft startup to ease the flow of electrons.
+ 
+  LEDS.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, NUM_LEDS);  // Use this for WS2801 or APA102
+//  LEDS.addLeds<LED_TYPE, LED_DT, COLOR_ORDER>(leds, NUM_LEDS);  // Use this for WS2812
+
+  FastLED.setBrightness(max_bright);
+  set_max_power_in_volts_and_milliamps(5, 500);               // FastLED Power management set at 5V, 500mA.
+  
+} // setup()
+
+
+
+void loop() {
+
+  uint8_t blurAmount = dim8_raw( beatsin8(3,64, 192) );       // A sinewave at 3 Hz with values ranging from 64 to 192.
+  blur1d( leds, NUM_LEDS, blurAmount);                        // Apply some blurring to whatever's already on the strip, which will eventually go black.
+  
+  uint8_t  i = beatsin8(  9, 0, NUM_LEDS);
+  uint8_t  j = beatsin8( 7, 0, NUM_LEDS);
+  uint8_t  k = beatsin8(  5, 0, NUM_LEDS);
+  
+  // The color of each point shifts over time, each at a different speed.
+  uint16_t ms = millis();  
+  leds[(i+j)/2] = CHSV( ms / 29, 200, 255);
+  leds[(j+k)/2] = CHSV( ms / 41, 200, 255);
+  leds[(k+i)/2] = CHSV( ms / 73, 200, 255);
+  leds[(k+i+j)/3] = CHSV( ms / 53, 200, 255);
+  
+  FastLED.show();
+  
+} // loop()
